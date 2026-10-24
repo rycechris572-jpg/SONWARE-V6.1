@@ -1,2 +1,1 @@
-# SONWARE-V6.1
-Predictive input buffer
+Doesn't matter if Click Between Frames is on.
