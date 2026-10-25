@@ -15,12 +15,6 @@ using namespace geode::prelude;
 constexpr int SPAM_INTERVAL_TICKS = 8;
 constexpr int SPAM_STREAK_REQUIRED = 3;
 constexpr int MAX_PREDICTION_CANDIDATES = 8;
-// Lightweight Wave direction checks during sustained rapid input.
-constexpr int WAVE_SCAN_INTERVAL = 8;
-constexpr int WAVE_SCAN_HORIZON = 24;
-constexpr int WAVE_DANGER_TICKS = 14;
-constexpr int WAVE_MIN_SAFETY_GAIN = 7;
-constexpr int WAVE_OVERRIDE_TICKS = 3;
 static void refreshBufferHud();
 
 class TrajectoryBufferSim {
@@ -42,9 +36,6 @@ private:
     float m_frameDt = 0.25f;
     int m_ticksSinceLastInput = 999;
     int m_rapidInputStreak = 0;
-    int m_waveScanClock = 0;
-    int m_waveOverrideTicks = 0;
-    bool m_waveOverridePush = false;
 
     PlayerObject* createTrajectoryPlayer() {
         PlayLayer* pl = PlayLayer::get();
@@ -97,8 +88,6 @@ public:
         m_firingBuffered = false;
         m_ticksSinceLastInput = 999;
         m_rapidInputStreak = 0;
-        m_waveScanClock = 0;
-        m_waveOverrideTicks = 0;
     }
 
     void quit() {
@@ -109,8 +98,6 @@ public:
         m_waitTicks = -1;
         m_queuedOpposite = false;
         m_rapidInputStreak = 0;
-        m_waveScanClock = 0;
-        m_waveOverrideTicks = 0;
     }
 
     void cyclePreset() {
@@ -121,7 +108,6 @@ public:
         }
         m_waitTicks = -1;
         m_queuedOpposite = false;
-        m_waveOverrideTicks = 0;
         constexpr int normalTicks[] = {2, 4, 8, 16, 24, 32, 48, 54, 60, 120, 0};
         constexpr int waveTicks[] = {2, 4, 8, 8, 24, 32, 48, 54, 60, 120, 0};
         m_enabled = m_presetIndex != 10;
@@ -148,7 +134,6 @@ public:
         m_queuedOpposite = false;
         m_gameHolding = false;
         m_rapidInputStreak = 0;
-        m_waveOverrideTicks = 0;
         return false;
     }
 
@@ -263,10 +248,6 @@ public:
         bool isMiniWave = (p1->m_isDart && p1->m_vehicleSize < 1.0f) ||
             (isDual && p2 && p2->m_isDart && p2->m_vehicleSize < 1.0f);
 
-        // While a short safety correction is active, remember every physical
-        // transition but prevent it from cancelling the chosen safe direction.
-        if (isWave && m_waveOverrideTicks > 0) return false;
-
         // Raw spam bypass must happen BEFORE waiting/queued-input handling.
         if (isWave && m_rapidInputStreak >= SPAM_STREAK_REQUIRED) {
             m_waitTicks = -1;
@@ -335,42 +316,8 @@ public:
         if (player->m_isShip || (pl->m_gameState.m_isDualMode && pl->m_player2 && pl->m_player2->m_isShip)) {
             m_waitTicks = -1;
             m_queuedOpposite = false;
-            m_waveOverrideTicks = 0;
             if (m_gameHolding != m_physicalHolding) m_SimFireButton(pl, m_physicalHolding);
             return;
-        }
-        // When rapid Wave spam is detected, compare both possible directions
-        // occasionally, rather than simulating on every press/release.
-        bool isDual = pl->m_gameState.m_isDualMode && pl->m_player2 != nullptr;
-        bool isWave = player->m_isDart || (isDual && pl->m_player2->m_isDart);
-        bool twoPlayer = pl->m_level && pl->m_level->m_twoPlayerMode;
-        if (m_waveOverrideTicks > 0) {
-            --m_waveOverrideTicks;
-            if (m_waveOverrideTicks == 0 && m_gameHolding != m_physicalHolding)
-                m_SimFireButton(pl, m_physicalHolding);
-            return;
-        }
-        if (isWave && !twoPlayer && m_rapidInputStreak >= SPAM_STREAK_REQUIRED &&
-            m_simPlayer1 && (!isDual || m_simPlayer2)) {
-            if (++m_waveScanClock >= WAVE_SCAN_INTERVAL) {
-                m_waveScanClock = 0;
-                int current = getSurvivalTicks(pl, player, pl->m_player2,
-                    isDual, 0, m_gameHolding, WAVE_SCAN_HORIZON);
-                if (current <= WAVE_DANGER_TICKS) {
-                    int opposite = getSurvivalTicks(pl, player, pl->m_player2,
-                        isDual, 0, !m_gameHolding, WAVE_SCAN_HORIZON);
-                    if (opposite >= current + WAVE_MIN_SAFETY_GAIN) {
-                        m_waitTicks = -1;
-                        m_queuedOpposite = false;
-                        m_waveOverridePush = !m_gameHolding;
-                        m_waveOverrideTicks = WAVE_OVERRIDE_TICKS;
-                        m_SimFireButton(pl, m_waveOverridePush);
-                        return;
-                    }
-                }
-            }
-        } else {
-            m_waveScanClock = 0;
         }
         if (m_waitTicks == 0) {
             m_SimFireButton(pl, m_bufferedPush);
@@ -421,7 +368,7 @@ $on_mod(Loaded) {
     freopen_s(&f, "CONOUT$", "w", stdout);
     SetConsoleTitleA("SONWARE V6.1 - Predictive Buffer");
     printf("============================================================\n");
-    printf(" [SONWARE] V6.1 LOADED (Smart Wave Experimental Build)\n");
+    printf(" [SONWARE] V6.1 LOADED (Predictive Buffer)\n");
     printf(" [SONWARE] F6: 2/2 -> 4/4 -> 8/8 -> 16/8 -> 24 -> 32 -> 48 -> 54 -> 60 -> 120 -> OFF\n");
     printf(" [SONWARE] Prediction candidate cap: %d\n", MAX_PREDICTION_CANDIDATES);
     printf("============================================================\n");
