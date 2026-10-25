@@ -3,9 +3,9 @@
 	"gd": {
 		"win": "2.2081"
 	},
-	"version": "v1.0.0",
-	"id": "ai.predictivebuffer",
-	"name": "Predictive Input Buffer",
-	"developer": "lilWC",
-	"description": "Trajectory-based 1-2 frame press and wave release input buffer."
+	"version": "v6.1.0",
+	"id": "rycechris572.sonware",
+	"name": "SONWARE V6.1",
+	"developer": "lilwc",
+	"description": "Predictive input buffering with trajectory-based timing and configurable gameplay profiles."
 }
