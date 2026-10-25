@@ -1,25 +1,32 @@
-name: Build Predictive Buffer (Windows)
+
+name: Build SONWARE V6.1 (Windows)
+
 on:
   workflow_dispatch:
   push:
     branches: [main, master]
+
 permissions:
   contents: read
+
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Build Geode mod
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build SONWARE V6.1
         id: build
         uses: geode-sdk/build-geode-mod@main
         with:
           target: Win64
           build-config: Release
-      - name: Upload compiled mod
+
+      - name: Upload SONWARE V6.1
         uses: actions/upload-artifact@v4
         with:
-          name: predictive-buffer-windows
+          name: SONWARE-V6.1-Windows
           path: ${{ steps.build.outputs.build-output }}
           if-no-files-found: error
-
