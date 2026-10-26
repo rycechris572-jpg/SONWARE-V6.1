@@ -362,18 +362,6 @@ static void refreshBufferHud() {
     }
 }
 
-// GUI bridge: preserves the original simulation engine and F6 behavior.
-static void sonwareCycleStage() {
-    s_sim.cyclePreset();
-    refreshBufferHud();
-}
-static std::string sonwareStageStatus() {
-    if (!s_sim.enabled()) return "STAGE: OFF";
-    return fmt::format("NORMAL: {} TICKS  /  WAVE: {} TICKS",
-                       s_sim.normalTicks(), s_sim.waveTicks());
-}
-#include "SonwareGUI.hpp"
-
 $on_mod(Loaded) {
     printf("============================================================\n");
     printf(" [SONWARE] V6.25 LOADED (Predictive Buffer)\n");
@@ -521,5 +509,15 @@ class $modify(BufBaseGameLayer, GJBaseGameLayer) {
 };
 
 
-
+// GUI bridge: preserves the original simulation engine and F6 behavior.
+void sonwareCycleStage() {
+    s_sim.cyclePreset();
+    refreshBufferHud();
+}
+std::string sonwareStageStatus() {
+    if (!s_sim.enabled()) return "STAGE: OFF";
+    return fmt::format("NORMAL: {} TICKS  /  WAVE: {} TICKS",
+                       s_sim.normalTicks(), s_sim.waveTicks());
+}
+#include "SonwareGUI.hpp"
 
