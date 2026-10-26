@@ -9,7 +9,6 @@
 #include <Windows.h>
 #include <cstdio>
 #include <algorithm>
-#include "SonwareGUI.hpp"
 
 using namespace geode::prelude;
 
@@ -364,10 +363,6 @@ static void refreshBufferHud() {
 }
 
 $on_mod(Loaded) {
-    AllocConsole();
-    FILE* f;
-    freopen_s(&f, "CONOUT$", "w", stdout);
-    SetConsoleTitleA("SONWARE V6.25 - Predictive Buffer");
     printf("============================================================\n");
     printf(" [SONWARE] V6.25 LOADED (Predictive Buffer)\n");
     printf(" [SONWARE] F6: 2/2 -> 4/4 -> 8/8 -> 16/8 -> 24 -> 32 -> 48 -> 54 -> 60 -> 120 -> OFF\n");
@@ -512,4 +507,17 @@ class $modify(BufBaseGameLayer, GJBaseGameLayer) {
         GJBaseGameLayer::playerTouchedRing(player, ring);
     }
 };
+
+
+// GUI bridge: preserves the original simulation engine and F6 behavior.
+static void sonwareCycleStage() {
+    s_sim.cyclePreset();
+    refreshBufferHud();
+}
+static std::string sonwareStageStatus() {
+    if (!s_sim.enabled()) return "STAGE: OFF";
+    return fmt::format("NORMAL: {} TICKS  /  WAVE: {} TICKS",
+                       s_sim.normalTicks(), s_sim.waveTicks());
+}
+#include "SonwareGUI.hpp"
 
