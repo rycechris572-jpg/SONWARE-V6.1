@@ -82,9 +82,10 @@ class SonwareGUI final : public cocos2d::CCLayerColor {
     ) {
         auto* label = cocos2d::CCLabelBMFont::create(text, "bigFont.fnt");
         if (!label) return nullptr;
-        std::string s = text ? text : "";
-        if (s == "PERFORMANCE") scale = std::min(scale, .205f);
-        else if (s == "OVERVIEW" || s == "SETTINGS") scale = std::min(scale, .255f);
+        // Fit navigation labels to the sidebar without clipping.
+        const float naturalWidth = label->getContentSize().width;
+        const float availableWidth = std::max(30.f, m_side - 34.f);
+        if (naturalWidth > 0.f) scale = std::min(scale, availableWidth / naturalWidth);
         label->setScale(scale);
         auto* item = cocos2d::CCMenuItemLabel::create(label, this, callback);
         if (!item) return nullptr;
