@@ -9,6 +9,7 @@
 #include <Windows.h>
 #include <cstdio>
 #include <algorithm>
+#include "SonwareGUI.hpp"
 
 using namespace geode::prelude;
 
@@ -366,9 +367,9 @@ $on_mod(Loaded) {
     AllocConsole();
     FILE* f;
     freopen_s(&f, "CONOUT$", "w", stdout);
-    SetConsoleTitleA("SONWARE V6.1 - Predictive Buffer");
+    SetConsoleTitleA("SONWARE V6.25 - Predictive Buffer");
     printf("============================================================\n");
-    printf(" [SONWARE] V6.1 LOADED (Predictive Buffer)\n");
+    printf(" [SONWARE] V6.25 LOADED (Predictive Buffer)\n");
     printf(" [SONWARE] F6: 2/2 -> 4/4 -> 8/8 -> 16/8 -> 24 -> 32 -> 48 -> 54 -> 60 -> 120 -> OFF\n");
     printf(" [SONWARE] Prediction candidate cap: %d\n", MAX_PREDICTION_CANDIDATES);
     printf("============================================================\n");
