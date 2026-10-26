@@ -3,8 +3,12 @@
 #include <Geode/modify/PauseLayer.hpp>
 #include <Windows.h>
 #include <algorithm>
+#include <string>
 
 using namespace geode::prelude;
+
+static void sonwareCycleStage();
+static std::string sonwareStageStatus();
 
 // SONWARE V6.25: pause-only modal. No global keyboard polling or scene persistence.
 class SonwareGUI final : public cocos2d::CCLayerColor {
@@ -13,7 +17,7 @@ class SonwareGUI final : public cocos2d::CCLayerColor {
     cocos2d::CCLabelBMFont* m_heading = nullptr;
     cocos2d::CCLabelBMFont* m_body = nullptr;
     int m_tab = 0;
-    int m_theme = 0;
+    int m_theme = 1; // Tokyo Night by default
     bool m_dragging = false;
     cocos2d::CCPoint m_lastTouch;
 
@@ -38,8 +42,8 @@ class SonwareGUI final : public cocos2d::CCLayerColor {
         m_heading->setString(tabs[m_tab]);
         m_heading->setColor(accent());
         switch (m_tab) {
-            case 0: m_body->setString("SONWARE V6.25 / ONLINE\n\nF6 cycles the existing buffer stages.\nOpen this control deck from Pause."); break;
-            case 1: m_body->setString("BUFFER STAGES\n\nF6: cycle the 11 existing presets.\nStage 11: OFF.\n\nBuffer code is unchanged."); break;
+            case 0: m_body->setString("SONWARE V6.25 / ACTIVE\n\nPause-screen control deck.\nUse STAGES to change buffer.\nRight Alt closes this window."); break;
+            case 1: { auto info = sonwareStageStatus(); m_body->setString(info.c_str()); break; }
             case 2: m_body->setString("ASSIST\n\nShip Straight Fly: not wired yet\nLegit Wave: not wired yet"); break;
             case 3: m_body->setString("OPTIMISATION\n\nControls will be connected after testing."); break;
             case 4: m_body->setString("LOGS\n\nGUI opened from Pause.\nNo automatic scene reopening."); break;
@@ -50,6 +54,7 @@ class SonwareGUI final : public cocos2d::CCLayerColor {
         m_tab = sender->getTag();
         refresh();
     }
+    void onStage(cocos2d::CCObject*) { sonwareCycleStage(); refresh(); }
     void onTheme(cocos2d::CCObject*) {
         m_theme = (m_theme + 1) % 4;
         refresh();
@@ -68,7 +73,7 @@ public:
         setID("sonware-v625-modal");
         setTouchEnabled(true);
         setTouchMode(cocos2d::kCCTouchesOneByOne);
-        setTouchPriority(-150); // after GUI menu (-200), before game controls
+        setTouchPriority(-129); // swallow before underlying pause/game input
         setKeypadEnabled(true);
         auto win = cocos2d::CCDirector::sharedDirector()->getWinSize();
         auto width = std::min(440.f, win.width - 20.f);
@@ -85,8 +90,8 @@ public:
         m_panel->addChild(version);
         m_buttons = cocos2d::CCMenu::create();
         m_buttons->setPosition({0, 0});
-        m_buttons->setTouchPriority(-200);
         m_panel->addChild(m_buttons);
+        m_buttons->setTouchPriority(-130); // buttons receive clicks before overlay
         for (int i = 0; i < 6; ++i) {
             auto* text = label(tabs[i], .34f, {0, 0});
             auto* item = cocos2d::CCMenuItemLabel::create(text, this, menu_selector(SonwareGUI::onTab));
@@ -105,13 +110,21 @@ public:
         auto* theme = cocos2d::CCMenuItemLabel::create(label("THEME", .38f, {0, 0}), this, menu_selector(SonwareGUI::onTheme));
         theme->setPosition({width - 48, 18});
         m_buttons->addChild(theme);
+        auto* stage = cocos2d::CCMenuItemLabel::create(
+            label("NEXT STAGE", .34f, {0, 0}), this,
+            menu_selector(SonwareGUI::onStage));
+        stage->setPosition({width - 75, 43});
+        m_buttons->addChild(stage);
         scheduleUpdate();
         refresh();
         return true;
     }
     void update(float) override {
-        // Close on the key-down edge; never reopen outside Pause.
-        if (GetAsyncKeyState(VK_RMENU) & 1) removeFromParentAndCleanup(true);
+        // Only close on Right Alt, never reopen automatically.
+        if (GetAsyncKeyState(VK_RMENU) & 1) {
+            removeFromParentAndCleanup(true);
+            return;
+        }
     }
     // Swallow touches so clicks cannot fall through to gameplay or Pause controls.
     bool ccTouchBegan(cocos2d::CCTouch* touch, cocos2d::CCEvent*) override {
@@ -155,3 +168,5 @@ class $modify(SonwarePauseLayer, PauseLayer) {
         if (auto* gui = SonwareGUI::create()) addChild(gui, 1000);
     }
 };
+
+
