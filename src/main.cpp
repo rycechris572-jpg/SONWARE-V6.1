@@ -519,5 +519,5 @@ std::string sonwareStageStatus() {
     return fmt::format("NORMAL: {} TICKS  /  WAVE: {} TICKS",
                        s_sim.normalTicks(), s_sim.waveTicks());
 }
-#include "SonwareGUI.hpp"
+#include "SonwareGui.hpp"
 
